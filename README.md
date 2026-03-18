@@ -1,10 +1,13 @@
 # Focus Bot
 
-A Slack bot that reminds you to stop messaging and get back to work when you're in a focus session.
+A Slack bot that publicly shames you when you message during a focus session. When you send a message, the bot replies in-thread tagging you with a reminder to get back to work — visible to everyone in the channel.
 
 ## How it works
 
-Users run `/focus start` to begin a session. Every message they send while the session is active gets an ephemeral nudge — only they can see it, nobody else in the channel does. Sessions auto-expire. `/focus stop` ends it manually.
+1. Run `/focus start` to begin a focus session
+2. Every message you send gets a public threaded reply tagging you with your reminder
+3. The bot auto-joins any public channel you message in
+4. Sessions auto-expire or end manually with `/focus stop`
 
 ---
 
@@ -16,21 +19,36 @@ Users run `/focus start` to begin a session. Every message they send while the s
 2. Paste the contents of `manifest.yml`
 3. Install the app to your workspace
 
-### 2. Get your credentials
+### 2. Required scopes
+
+Under **OAuth & Permissions → Bot Token Scopes**:
+- `chat:write` — post messages
+- `channels:join` — auto-join public channels
+- `channels:history` — read messages in public channels
+- `channels:read` — list channels
+- `commands` — slash commands
+
+Under **Event Subscriptions → Subscribe to events on behalf of users**:
+- `message.channels` — receive messages from all public channels
+
+### 3. Get your credentials
 
 From the Slack app settings page, grab:
 - **Bot Token** (`xoxb-...`) — under *OAuth & Permissions*
 - **Signing Secret** — under *Basic Information*
 - **App-Level Token** (`xapp-...`) — under *Basic Information → App-Level Tokens*, create one with `connections:write` scope
 
-### 3. Configure environment
+### 4. Configure environment
 
-```bash
-cp .env.example .env
-# Fill in your three tokens
+Create a `.env` file:
+
+```
+SLACK_BOT_TOKEN=xoxb-your-bot-token
+SLACK_SIGNING_SECRET=your-signing-secret
+SLACK_APP_TOKEN=xapp-your-app-token
 ```
 
-### 4. Install and run
+### 5. Install and run
 
 ```bash
 npm install
@@ -59,29 +77,9 @@ npm run dev
 
 ---
 
-## Deploying to production
-
-The bot needs to stay running to listen for messages. Easy options:
-
-- **Railway / Render / Fly.io** — push the repo, set env vars, done
-- **PM2 on a VPS** — `pm2 start index.js --name focus-bot`
-
-For production, swap the in-memory `focusSessions` Map for Redis so sessions survive restarts:
-
-```js
-// npm install ioredis
-const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_URL);
-
-// set: redis.set(`focus:${userId}`, JSON.stringify(session), "EX", ttlSeconds)
-// get: JSON.parse(await redis.get(`focus:${userId}`))
-// del: redis.del(`focus:${userId}`)
-```
-
----
-
 ## Notes
 
-- Ephemeral messages are only visible to the sender — no channel noise
-- The bot needs to be in a channel to see messages there (invite it with `/invite @Focus Bot`)
-- For DMs, it listens automatically
+- Reminders are **public threaded replies** that @mention the user — everyone in the channel can see them
+- The bot auto-joins public channels when you message in them (no need to manually invite it)
+- Sessions are stored in-memory — restarting the bot clears active sessions
+- The bot needs Socket Mode enabled (uses WebSocket, no public URL required)
