@@ -151,29 +151,6 @@ app.command("/focus", async ({ command, ack, respond, client }) => {
   }
 });
 
-// ─── Join user's public channels ──────────────────────────────────────────────
-
-async function joinUserChannels(userId) {
-  let cursor;
-  do {
-    const result = await app.client.users.conversations({
-      user: userId,
-      types: "public_channel",
-      exclude_archived: true,
-      limit: 200,
-      cursor,
-    });
-    for (const channel of result.channels) {
-      if (!channel.is_member) {
-        try {
-          await app.client.conversations.join({ channel: channel.id });
-        } catch (_) {}
-      }
-    }
-    cursor = result.response_metadata?.next_cursor;
-  } while (cursor);
-}
-
 // ─── Message listener ─────────────────────────────────────────────────────────
 
 app.event("message", async ({ event, client }) => {
@@ -202,31 +179,32 @@ app.event("message", async ({ event, client }) => {
 
   try {
     await client.conversations.join({ channel: event.channel });
-  } catch (_) {}
-
-  await client.chat.postMessage({
-    channel: event.channel,
-    thread_ts: event.ts,
-    text: `<@${event.user}> ${session.reminder}`,
-    blocks: [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: session.reminder,
-        },
-      },
-      {
-        type: "context",
-        elements: [
-          {
+    await client.chat.postMessage({
+      channel: event.channel,
+      thread_ts: event.ts,
+      text: `<@${event.user}> ${session.reminder}`,
+      blocks: [
+        {
+          type: "section",
+          text: {
             type: "mrkdwn",
-            text: `🔕 Focus mode active · ${Math.max(0, Math.round((session.endTime - Date.now()) / 60000))} min left · \`/focus stop\` to end`,
+            text: `<@${event.user}> ${session.reminder}`,
           },
-        ],
-      },
-    ],
-  });
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `🔕 Focus mode active · ${Math.max(0, Math.round((session.endTime - Date.now()) / 60000))} min left · \`/focus stop\` to end`,
+            },
+          ],
+        },
+      ],
+    });
+  } catch (err) {
+    console.error(`❌ Could not respond in #${event.channel}: ${err.data?.error || err.message}`);
+  }
 });
 
 // ─── Auto-expire cron (checks every minute) ───────────────────────────────────
