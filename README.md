@@ -26,10 +26,13 @@ Under **OAuth & Permissions → Bot Token Scopes**:
 - `channels:join` — auto-join public channels
 - `channels:history` — read messages in public channels
 - `channels:read` — list channels
+- `groups:history` — read messages in private channels
+- `groups:read` — list private channels
 - `commands` — slash commands
 
 Under **Event Subscriptions → Subscribe to events on behalf of users**:
 - `message.channels` — receive messages from all public channels
+- `message.groups` — receive messages from private channels the bot is in
 
 ### 3. Get your credentials
 
@@ -81,5 +84,6 @@ npm run dev
 
 - Reminders are **public threaded replies** that @mention the user — everyone in the channel can see them
 - The bot auto-joins public channels when you message in them (no need to manually invite it)
+- For private channels, invite the bot with `/invite @Focus Bot` — it can't auto-join those
 - Sessions are stored in-memory — restarting the bot clears active sessions
 - The bot needs Socket Mode enabled (uses WebSocket, no public URL required)

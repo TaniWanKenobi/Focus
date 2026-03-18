@@ -179,6 +179,9 @@ app.event("message", async ({ event, client }) => {
 
   try {
     await client.conversations.join({ channel: event.channel });
+  } catch (_) {}
+
+  try {
     await client.chat.postMessage({
       channel: event.channel,
       thread_ts: event.ts,
