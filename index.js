@@ -16,7 +16,7 @@ const focusSessions = new Map();
 
 const DEFAULT_DURATION_MINUTES = 25;
 const DEFAULT_REMINDER =
-  "🧠 Hey, you're in focus mode. Was that message necessary? Get back to work.";
+  "Get back to work you bum";
 
 // ─── Commands ────────────────────────────────────────────────────────────────
 
@@ -151,6 +151,29 @@ app.command("/focus", async ({ command, ack, respond, client }) => {
   }
 });
 
+// ─── Join user's public channels ──────────────────────────────────────────────
+
+async function joinUserChannels(userId) {
+  let cursor;
+  do {
+    const result = await app.client.users.conversations({
+      user: userId,
+      types: "public_channel",
+      exclude_archived: true,
+      limit: 200,
+      cursor,
+    });
+    for (const channel of result.channels) {
+      if (!channel.is_member) {
+        try {
+          await app.client.conversations.join({ channel: channel.id });
+        } catch (_) {}
+      }
+    }
+    cursor = result.response_metadata?.next_cursor;
+  } while (cursor);
+}
+
 // ─── Message listener ─────────────────────────────────────────────────────────
 
 app.event("message", async ({ event, client }) => {
@@ -177,8 +200,14 @@ app.event("message", async ({ event, client }) => {
 
   session.messageCount++;
 
+  try {
+    await client.conversations.join({ channel: event.channel });
+  } catch (_) {}
+
   await client.chat.postMessage({
     channel: event.channel,
+    thread_ts: event.ts,
+    text: `<@${event.user}> ${session.reminder}`,
     blocks: [
       {
         type: "section",
@@ -223,4 +252,5 @@ cron.schedule("* * * * *", async () => {
 (async () => {
   await app.start();
   console.log("⚡ Focus bot running");
+
 })();
