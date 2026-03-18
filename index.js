@@ -177,9 +177,8 @@ app.event("message", async ({ event, client }) => {
 
   session.messageCount++;
 
-  await client.chat.postEphemeral({
+  await client.chat.postMessage({
     channel: event.channel,
-    user: event.user,
     blocks: [
       {
         type: "section",
