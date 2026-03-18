@@ -1,0 +1,37 @@
+display_information:
+  name: Focus Bot
+  description: Reminds you to stop messaging and get back to work.
+  background_color: "#1a1a1a"
+
+features:
+  bot_user:
+    display_name: Focus Bot
+    always_online: true
+  slash_commands:
+    - command: /focus
+      description: Manage your focus session
+      usage_hint: "start [minutes] | stop | status | set reminder <text>"
+      should_escape: false
+
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+      - commands
+      - channels:history
+      - groups:history
+      - im:history
+      - mpim:history
+
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.channels
+      - message.groups
+      - message.im
+      - message.mpim
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
